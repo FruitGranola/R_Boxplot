@@ -1,0 +1,143 @@
+---
+title: "データの可視化（箱ひげ図）"
+date: "`r Sys.Date()`"
+author: Sort
+output:
+  rmdformats::readthedown:
+    highlight: kate
+    self_contained: true
+---
+
+```{css, echo=FALSE}
+#content {
+    max-width: 100%;
+}
+```
+
+```{r, include=FALSE}
+library(rmdformats)
+
+knitr::opts_chunk$set(warning = F,
+                      message = F,
+                      comment = "",
+                      fig.align = "center")
+```
+
+# 使用するパッケージ
+
+```{r}
+library(tidyverse)
+library(magrittr)
+```
+
+# ggplot2 の theme をあらかじめ設定しておく
+
+```{r}
+theme_set(theme_minimal(base_size = 15))
+```
+
+# 使用するデータ
+
+```{r}
+data <- read_csv("Data/House_of_Councilors_1996_2017.csv")
+```
+
+# データ内の変数名を確認する
+
+```{r}
+names(data)
+```
+
+# 2015年にデータを絞る
+
+```{r}
+data_2005 <- data %>% filter(year == 2005) # 2005年のデータに絞る
+```
+
+# 上位4政党に絞る
+
+今回は簡単のために上位4政党に絞る。
+
+```{r}
+data_2005 %>% 
+  ggplot(aes(x = party_jpn)) +
+  geom_bar() +
+  labs(x = "")
+```
+
+```{r}
+data_2005 %<>% filter(party_jpn %in% c("自民党", "民主党", "社民党", "共産党"))
+```
+
+# 箱ひげ図
+
+## 何の変哲もない箱ひげ図
+
+pointは外れ値を表す。
+
+```{r}
+data_2005 %>% 
+  ggplot(aes(x = party_jpn, y = voteshare)) +
+  geom_boxplot() +
+  labs(x = "", y = "得票率", title = "2005年衆院選: 候補者の得票率") 
+```
+
+## x軸の順番を入れ替える
+
+箱ひげ図で複数のクラスタを比較する際は、medianが小さい順に並べたほうが見やすい。
+ただ、棒グラフと違って、**fct_reoder()**は順序的な意味合いを持たないfactor型には使えないため、
+**transform(x = factor(x ,levels = c("hoge1", "hoge2", "hoge3")))**で並び替えを行う。
+
+```{r}
+data_2005 %>% 
+  transform(party_jpn = factor(party_jpn ,levels = c("共産党", "社民党", "民主党", "自民党"))) %>%
+  ggplot(aes(x = party_jpn, y = voteshare)) +
+  geom_boxplot() +
+  labs(x = "", y = "得票率", title = "2005年衆院選: 候補者の得票率") 
+```
+
+## クラスタごとに色を付ける
+
+クラスタごとに色を付けると、より視認性が向上する（と思う...）。
+**scale_fill_manual(values = c("color1", "color2", "color3", "color4"))**で、4色指定すれば自由に色を付けられる。
+[Github](https://github.com/FruitGranola/R_Boxplot)のレポジトリの中にカラーリストを入れたので、興味のある人は遊んでみて。
+
+```{r}
+data_2005 %>% 
+  transform(party_jpn = factor(party_jpn ,levels = c("共産党", "社民党", "民主党", "自民党"))) %>%
+  ggplot(aes(x = party_jpn, y = voteshare)) +
+  geom_boxplot(aes(fill = party_jpn), show.legend = F) +
+  labs(x = "", y = "得票率", title = "2005年衆院選: 候補者の得票率") 
+```
+
+## 平均値を付け加える
+
+たまにt検定とかすると、「平均値も一緒に見たいなぁ」と思うこともある。そのときは以下のようにすれば、平均値も確認できる。
+
+社民党の平均値とmedianに開きがあるようだ。もしかしたらヒストグラムに歪みがあるかも。
+
+```{r}
+data_2005 %>% 
+  transform(party_jpn = factor(party_jpn ,levels = c("共産党", "社民党", "民主党", "自民党"))) %>%
+  ggplot(aes(x = party_jpn, y = voteshare)) +
+  geom_boxplot(aes(fill = party_jpn), show.legend = F) +
+  labs(x = "", y = "得票率", title = "2005年衆院選: 候補者の得票率") +
+  stat_summary(fun = mean, geom = "point", color = "#FC4E07") 
+```
+
+## バイオリンプロット
+
+バイオリンプロットを一緒に描くことで、データの分布を確認しながら要約統計量を見ることができる。
+社民党の得票率は右方向に裾野が広い分布ため、平均値とmedianが離れていたようだ。
+共産党はあまりデータにばらつきが無いように見える。
+
+```{r}
+data_2005 %>% 
+  transform(party_jpn = factor(party_jpn ,levels = c("共産党", "社民党", "民主党", "自民党"))) %>%
+  ggplot(aes(x = party_jpn, y = voteshare)) +
+  geom_violin(aes(fill = party_jpn), alpha = 0.3, show.legend = F) +
+  geom_boxplot(alpha = .5, show.legend = F) +
+  labs(x = "", y = "得票率", title = "2005年衆院選: 候補者の得票率") +
+  stat_summary(fun = mean, geom = "point", color = "#FC4E07") +
+  coord_flip()
+```
