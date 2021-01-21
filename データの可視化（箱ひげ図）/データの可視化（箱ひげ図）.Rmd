@@ -2,26 +2,17 @@
 title: "データの可視化（箱ひげ図）"
 date: "`r Sys.Date()`"
 author: Sort
-output:
-  rmdformats::readthedown:
-    highlight: kate
-    self_contained: true
+output: html_document
 ---
 
-```{css, echo=FALSE}
-#content {
-    max-width: 100%;
-}
-```
-
 ```{r, include=FALSE}
-library(rmdformats)
-
 knitr::opts_chunk$set(warning = F,
                       message = F,
                       comment = "",
                       fig.align = "center")
 ```
+
+この記事のコードをまとめたものは[Github](https://github.com/FruitGranola?tab=repositories)にあります。
 
 # 使用するパッケージ
 
@@ -85,8 +76,8 @@ data_2005 %>%
 ## x軸の順番を入れ替える
 
 箱ひげ図で複数のクラスタを比較する際は、medianが小さい順に並べたほうが見やすい。
-ただ、棒グラフと違って、**fct_reoder()**は順序的な意味合いを持たないfactor型には使えないため、
-**transform(x = factor(x ,levels = c("hoge1", "hoge2", "hoge3")))**で並び替えを行う。
+ただ、棒グラフと違って、`fct_reoder()`は順序的な意味合いを持たないfactor型には使えないため、
+`transform(x = factor(x ,levels = c("hoge1", "hoge2", "hoge3")))`で並び替えを行う。
 
 ```{r}
 data_2005 %>% 
@@ -99,7 +90,7 @@ data_2005 %>%
 ## クラスタごとに色を付ける
 
 クラスタごとに色を付けると、より視認性が向上する（と思う...）。
-**scale_fill_manual(values = c("color1", "color2", "color3", "color4"))**で、4色指定すれば自由に色を付けられる。
+`scale_fill_manual(values = c("color1", "color2", "color3", "color4"))`で、4色指定すれば自由に色を付けられる。
 [Github](https://github.com/FruitGranola/R_Boxplot)のレポジトリの中にカラーリストを入れたので、興味のある人は遊んでみて。
 
 ```{r}
